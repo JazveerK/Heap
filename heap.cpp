@@ -1,64 +1,81 @@
 //Jazveer Kaler
 // 02/25/2024
 // Heap: Program that creates a heap. Takes in up to 100 numbers and prints it out as a tree-based data structure
+// numbers.txt from Tejas
 
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 
 void add(int num, int heap[], int& count);
-void print(int index, int count, int end, int (heap)[101]);
-int removeMax(int elements[], int& count);
-void removeAll(int elements[], int& count);
+int removeMax(int heap[], int& count);
+void removeAll(int heap[], int& count);
+void print(int heap[], int count, int index = 1, int depth = 0);
 
 int main() {
-    bool running = true;
-    char command[15];
-    int heap[101];
+    int heap[101] = {0};
     int count = 0;
+    string command;
+    bool running = true;
+
     cout << "WELCOME TO HEAP" << endl;
-    
-    for (int i = 0; i < 101; i++){
-       heap[i] = NULL;
-     }
 
-    //Main program loop
-    while (running) {
+    while (running) { // Main Program
+        cout << "Type in a command: ADD, PRINT, FILE, REMOVE, WIPE or QUIT" << endl; //Prompts user for input
+        getline(cin, command);
 
-        //Takes in commands
-        cout << "Type in a command: ADD, PRINT, REMOVE, WIPE or QUIT" << endl;
-        cin.get(command, 16);
-        cin.ignore(16, '\n');
-
-        //ADD
-        if (strcmp(command, "ADD") == 0) {
+        if (command == "ADD") { //ADD
             int num;
             cout << "Enter a number to add: ";
             cin >> num;
-            cin.ignore();
             add(num, heap, count);
+            cin.ignore();
         }
         
-        //PRINT
-        else if (strcmp(command, "PRINT") == 0) {
-            print(1, 0, count, heap);
-        }
-
-        //REMOVE
-        else if (strcmp(command, "REMOVE") == 0) {
-            int removed = removeMax(heap, count);
-            cout << "Removed: " << removed << endl;
+        else if (command == "PRINT") { //PRINT
+            if (count == 0)
+                cout << "Heap is empty." << endl;
+            else {
+                cout << "Heap:" << endl;
+                print(heap, count);
+            }
         }
         
-        //WIPE
-        else if (strcmp(command, "WIPE") == 0) {
+        else if (command == "FILE") { //FILE
+            ifstream file("numbers.txt");
+            if (!file)
+                cout << "Error opening file" << endl;
+            else {
+                int num;
+                
+                while (file >> num) {
+                    add(num, heap, count);
+                }
+                
+                file.close();
+                cout << "Numbers added from file." << endl;
+            }
+        }
+        
+        else if (command == "REMOVE") { //REMOVE
+            if (count == 0) {
+                cout << "Heap is empty." << endl;
+            }
+            else {
+                int removed = removeMax(heap, count);
+                cout << "Removed: " << removed << endl;
+            }
+        }
+        
+        else if (command == "WIPE") { //WIPE
             removeAll(heap, count);
+            cout << "Heap wiped out." << endl;
         }
-
-        //QUIT
-        else if (strcmp(command, "QUIT") == 0) {
+        
+        else if (command == "QUIT") { //QUIT
             cout << "Program ended." << endl;
             running = false;
         }
@@ -67,67 +84,59 @@ int main() {
     return 0;
 }
 
+//adds numbers to heap array
 void add(int num, int heap[], int& count) {
-    int index = count;
-    heap[count++] = num;
+    int index = ++count;
+    heap[index] = num;
 
-    while (index > 0 && heap[index] > heap[(index - 1) / 2]) {
-        swap(heap[index], heap[(index - 1) / 2]);
-        index = (index - 1) / 2;
+    while (index > 1 && heap[index] > heap[index / 2]) {
+        swap(heap[index], heap[index / 2]);
+        index /= 2;
     }
 }
 
-//From Galbraith
-void print(int index, int count, int end, int (heap)[101]){
-  if (heap[1] == NULL)
-    cout << "";
-  
-  else{
-    if((index*2) + 1 < end){
-      print((index*2) + 1, count + 1, end, heap);
-    }
-      
-    for (int i = 0; i < count; i++){
-      cout << '\t';
-    }
-    cout << heap[index] << endl;
-    
-    if((index*2) < end)
-      print((index*2), count + 1, end, heap);
-    
-  }
-}
+//removes the largest number
+int removeMax(int heap[], int& count) {
+    int removed = heap[1];
+    heap[1] = heap[count--];
 
-int removeMax(int elements[], int& count) {
-    int removed = elements[0];
-    elements[0] = elements[--count];
-
-    int index = 0;
+    int index = 1;
     while (true) {
-        int leftChild = 2 * index + 1;
-        int rightChild = 2 * index + 2;
+        int leftChild = 2 * index;
+        int rightChild = 2 * index + 1;
         int largest = index;
 
-        if (leftChild < count && elements[leftChild] > elements[largest]) {
+        if (leftChild <= count && heap[leftChild] > heap[largest])
             largest = leftChild;
-        }
-        if (rightChild < count && elements[rightChild] > elements[largest]) {
-            largest = rightChild;
-        }
-        if (largest != index) {
-            swap(elements[index], elements[largest]);
-            index = largest;
-        } else {
-            break;
-        }
-    }
 
+        if (rightChild <= count && heap[rightChild] > heap[largest])
+            largest = rightChild;
+
+        if (largest != index) {
+            swap(heap[index], heap[largest]);
+            index = largest;
+        }
+        else
+            break;
+    }
     return removed;
 }
 
-void removeAll(int elements[], int& count) {
-    while (count > -1) {
-        int removed = removeMax(elements, count);
-        cout << "Removed: " << removed << endl;
+//removes all the numbers
+void removeAll(int heap[], int& count) {
+    while (count > 0) {
+        int removed = removeMax(heap, count);
+        cout << removed << " ";
+        //count--;
+    }
+    cout << endl;
+}
+
+//prints everything out
+void print(int heap[], int count, int index, int depth) {
+    if (index <= count) {
+        print(heap, count, 2 * index + 1, depth + 1);
+        cout << string(4 * depth, ' ') << heap[index] << endl;
+        print(heap, count, 2 * index, depth + 1);
     }
 }
